@@ -1,0 +1,67 @@
+# What the suite tests. A chart that tests nothing in particular is a chart nobody can use.
+appURL: ""
+# The image holds the orchestrator, not a browser: the browser is the sidecar below, reached over
+# --cdp-url. See the Dockerfile for why.
+image:
+  repository: ghcr.io/lasttoss/ui-test-orchestrator
+  tag: ""
+  pullPolicy: IfNotPresent
+imagePullSecrets: []
+
+# Set cdpURL to drive a browser you already run, and turn chrome.enabled off; the chart then runs no
+# browser of its own.
+cdpURL: ""
+
+chrome:
+  enabled: true
+  image: zenika/alpine-chrome
+  tag: with-node
+  # A shared browser process for the whole suite. One per scenario would work and cost a browser launch
+  # per scenario.
+  port: 9222
+
+# The suite to run. Either this chart's own scenarios (rendered from scenarios/ into a ConfigMap) or one
+# you already have.
+scenarios:
+  existingConfigMap: ""
+  dir: /scenarios
+
+attempts: 2
+parallel: 3
+# Kept out of the image: the policy is a decision, and a decision belongs in something you can review.
+quarantine:
+  existingConfigMap: ""
+
+cronJob:
+  enabled: false
+  schedule: "0 6 * * *"
+  # A CronJob that keeps failing is a CronJob that keeps running; history is bounded on purpose.
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+
+job:
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 3600
+
+networkPolicy:
+  enabled: true
+  # Egress is allowed to the application under test and to DNS, and nowhere else. A test suite that can
+  # reach the whole cluster is a test suite that can drop a production table by accident.
+  dnsPort: 53
+
+serviceAccount:
+  create: true
+  name: ""
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: "1"
+    memory: 512Mi
+
+podAnnotations: {}
+nodeSelector: {}
+tolerations: []
+affinity: {}

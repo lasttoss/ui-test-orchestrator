@@ -1,0 +1,7 @@
+name: the status badge is the colour it should be
+url: /
+tags: [visual]
+steps:
+  - action: assert_image
+    template: badge-healthy.png
+    threshold: 0.9

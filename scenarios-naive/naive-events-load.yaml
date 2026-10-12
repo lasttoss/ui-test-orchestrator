@@ -1,0 +1,8 @@
+name: the events table loads behind the button (asserting immediately)
+url: /
+tags: [events, naive]
+steps:
+  - action: click
+    selector: "[data-testid=load]"
+  - action: assert_visible
+    selector: "[data-testid=rows]"

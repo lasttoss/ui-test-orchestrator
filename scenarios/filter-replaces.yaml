@@ -1,0 +1,16 @@
+name: typing twice leaves the second value
+url: /
+tags: [panel, form]
+steps:
+  - action: fill
+    selector: "[data-testid=filter]"
+    value: first
+  - action: assert_text
+    selector: "[data-testid=echo]"
+    text: "typed: first"
+  - action: fill
+    selector: "[data-testid=filter]"
+    value: second
+  - action: assert_text
+    selector: "[data-testid=echo]"
+    text: "typed: second"

@@ -1,0 +1,6 @@
+bin/
+report/
+report-*/
+/tmp-*/
+*.tmp
+state/*.tmp

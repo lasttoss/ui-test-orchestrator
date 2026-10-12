@@ -1,0 +1,12 @@
+name: the events table loads behind the button
+url: /
+tags: [events]
+steps:
+  - action: click
+    selector: "[data-testid=load]"
+  - action: assert_eventually
+    timeout: 8s
+    poll: 150ms
+    steps:
+      - action: assert_visible
+        selector: "[data-testid=rows]"

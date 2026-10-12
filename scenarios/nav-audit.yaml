@@ -1,0 +1,9 @@
+name: clicking Audit switches the heading
+url: /
+tags: [nav]
+steps:
+  - action: click
+    selector: "[data-testid=tab-audit]"
+  - action: assert_text
+    selector: "#heading"
+    text: Audit (active)

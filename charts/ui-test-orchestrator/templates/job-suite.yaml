@@ -1,0 +1,22 @@
+# A failed suite stays failed: backoffLimit 0 means Kubernetes does not retry it. Retries belong inside a
+# scenario, where they are counted and reported, not around the suite, where they hide a broken suite.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "uito.fullname" . }}-suite
+  labels:
+    {{- include "uito.labels" . | nindent 4 }}
+spec:
+  backoffLimit: {{ .Values.job.backoffLimit }}
+  {{- if .Values.job.ttlSecondsAfterFinished }}
+  ttlSecondsAfterFinished: {{ .Values.job.ttlSecondsAfterFinished }}
+  {{- end }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "uito.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+      annotations:
+        {{- toYaml .Values.podAnnotations | nindent 8 }}
+    spec:
+      {{- include "uito.podSpec" . | nindent 6 }}

@@ -1,0 +1,6 @@
+name: the events panel is on the page
+url: /
+tags: [smoke, panel]
+steps:
+  - action: assert_visible
+    selector: "#panel"

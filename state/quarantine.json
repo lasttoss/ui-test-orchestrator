@@ -1,0 +1,240 @@
+{
+  "version": 1,
+  "policy": {
+    "quarantine_after": 2,
+    "unquarantine_after": 3
+  },
+  "scenarios": {
+    "events-filter-then-load": {
+      "status": "active",
+      "consecutive_failures": 0,
+      "consecutive_passes": 8,
+      "flakes": 0,
+      "runs": 8,
+      "fails": 0,
+      "quarantined_at": "0001-01-01T00:00:00Z",
+      "last_run": "2026-10-12T04:02:27.348238647Z"
+    },
+    "events-load": {
+      "status": "active",
+      "consecutive_failures": 0,
+      "consecutive_passes": 8,
+      "flakes": 0,
+      "runs": 8,
+      "fails": 0,
+      "quarantined_at": "0001-01-01T00:00:00Z",
+      "last_run": "2026-10-12T04:02:27.348238647Z"
+    },
+    "events-row-content": {
+      "status": "active",
+      "consecutive_failures": 0,
+      "consecutive_passes": 8,
+      "flakes": 0,
+      "runs": 8,
+      "fails": 0,
+      "quarantined_at": "0001-01-01T00:00:00Z",
+      "last_run": "2026-10-12T04:02:27.348238647Z"
+    },
+    "events-row-failed-state": {
+      "status": "active",
+      "consecutive_failures": 0,
+      "consecutive_passes": 8,
+      "flakes": 0,
+      "runs": 8,
+      "fails": 0,
+      "quarantined_at": "0001-01-01T00:00:00Z",
+      "last_run": "2026-10-12T04:02:27.348238647Z"
+    },
+    "events-tab-switch-keeps-rows": {
+      "status": "active",
+      "consecutive_failures": 0,
+      "consecutive_passes": 8,
+      "flakes": 0,
+      "runs": 8,
+      "fails": 0,
+      "quarantined_at": "0001-01-01T00:00:00Z",
+      "last_run": "2026-10-12T04:02:27.348238647Z"
+    },
+    "events-twice": {
+      "status": "active",
+      "consecutive_failures": 0,
+      "consecutive_passes": 8,
+      "flakes": 0,
+      "runs": 8,
+      "fails": 0,
+      "quarantined_at": "0001-01-01T00:00:00Z",
+      "last_run": "2026-10-12T04:02:27.348238647Z"
+    },
+    "filter-empty-at-start": {
+      "status": "active",
+      "consecutive_failures": 0,
+      "consecutive_passes": 8,
+      "flakes": 0,
+      "runs": 8,
+      "fails": 0,
+      "quarantined_at": "0001-01-01T00:00:00Z",
+      "last_run": "2026-10-12T04:02:27.348238647Z"
+    },
+    "filter-replaces": {
+      "status": "active",
+      "consecutive_failures": 0,
+      "consecutive_passes": 8,
+      "flakes": 0,
+      "runs": 8,
+      "fails": 0,
+      "quarantined_at": "0001-01-01T00:00:00Z",
+      "last_run": "2026-10-12T04:02:27.348238647Z"
+    },
+    "filter-types": {
+      "status": "active",
+      "consecutive_failures": 0,
+      "consecutive_passes": 8,
+      "flakes": 0,
+      "runs": 8,
+      "fails": 0,
+      "quarantined_at": "0001-01-01T00:00:00Z",
+      "last_run": "2026-10-12T04:02:27.348238647Z"
+    },
+    "nav-audit": {
+      "status": "active",
+      "consecutive_failures": 0,
+      "consecutive_passes": 8,
+      "flakes": 0,
+      "runs": 8,
+      "fails": 0,
+      "quarantined_at": "0001-01-01T00:00:00Z",
+      "last_run": "2026-10-12T04:02:27.348238647Z"
+    },
+    "nav-back-to-events": {
+      "status": "active",
+      "consecutive_failures": 0,
+      "consecutive_passes": 8,
+      "flakes": 0,
+      "runs": 8,
+      "fails": 0,
+      "quarantined_at": "0001-01-01T00:00:00Z",
+      "last_run": "2026-10-12T04:02:27.348238647Z"
+    },
+    "nav-by-label": {
+      "status": "active",
+      "consecutive_failures": 0,
+      "consecutive_passes": 8,
+      "flakes": 0,
+      "runs": 8,
+      "fails": 0,
+      "quarantined_at": "0001-01-01T00:00:00Z",
+      "last_run": "2026-10-12T04:02:27.348238647Z"
+    },
+    "nav-config": {
+      "status": "active",
+      "consecutive_failures": 0,
+      "consecutive_passes": 8,
+      "flakes": 0,
+      "runs": 8,
+      "fails": 0,
+      "quarantined_at": "0001-01-01T00:00:00Z",
+      "last_run": "2026-10-12T04:02:27.348238647Z"
+    },
+    "smoke-badge-text": {
+      "status": "active",
+      "consecutive_failures": 0,
+      "consecutive_passes": 8,
+      "flakes": 0,
+      "runs": 8,
+      "fails": 0,
+      "quarantined_at": "0001-01-01T00:00:00Z",
+      "last_run": "2026-10-12T04:02:27.348238647Z"
+    },
+    "smoke-nav": {
+      "status": "active",
+      "consecutive_failures": 0,
+      "consecutive_passes": 8,
+      "flakes": 0,
+      "runs": 8,
+      "fails": 0,
+      "quarantined_at": "0001-01-01T00:00:00Z",
+      "last_run": "2026-10-12T04:02:27.348238647Z"
+    },
+    "smoke-panel-visible": {
+      "status": "active",
+      "consecutive_failures": 0,
+      "consecutive_passes": 8,
+      "flakes": 0,
+      "runs": 8,
+      "fails": 0,
+      "quarantined_at": "0001-01-01T00:00:00Z",
+      "last_run": "2026-10-12T04:02:27.348238647Z"
+    },
+    "smoke-title": {
+      "status": "active",
+      "consecutive_failures": 0,
+      "consecutive_passes": 5,
+      "flakes": 0,
+      "runs": 8,
+      "fails": 3,
+      "quarantined_at": "0001-01-01T00:00:00Z",
+      "last_run": "2026-10-12T04:02:27.348238647Z"
+    },
+    "visual-badge": {
+      "status": "active",
+      "consecutive_failures": 0,
+      "consecutive_passes": 8,
+      "flakes": 0,
+      "runs": 8,
+      "fails": 0,
+      "quarantined_at": "0001-01-01T00:00:00Z",
+      "last_run": "2026-10-12T04:02:27.348238647Z"
+    },
+    "visual-badge-region": {
+      "status": "active",
+      "consecutive_failures": 0,
+      "consecutive_passes": 8,
+      "flakes": 0,
+      "runs": 8,
+      "fails": 0,
+      "quarantined_at": "0001-01-01T00:00:00Z",
+      "last_run": "2026-10-12T04:02:27.348238647Z"
+    },
+    "visual-badge-then-text": {
+      "status": "active",
+      "consecutive_failures": 0,
+      "consecutive_passes": 8,
+      "flakes": 0,
+      "runs": 8,
+      "fails": 0,
+      "quarantined_at": "0001-01-01T00:00:00Z",
+      "last_run": "2026-10-12T04:02:27.348238647Z"
+    },
+    "visual-panel-unchanged": {
+      "status": "active",
+      "consecutive_failures": 0,
+      "consecutive_passes": 8,
+      "flakes": 0,
+      "runs": 8,
+      "fails": 0,
+      "quarantined_at": "0001-01-01T00:00:00Z",
+      "last_run": "2026-10-12T04:02:27.348238647Z"
+    },
+    "waits-too-briefly": {
+      "status": "active",
+      "consecutive_failures": 0,
+      "consecutive_passes": 2,
+      "flakes": 1,
+      "runs": 2,
+      "fails": 0,
+      "quarantined_at": "0001-01-01T00:00:00Z",
+      "last_run": "2026-10-12T04:02:08.995910763Z"
+    },
+    "waits-too-briefly-for-a-row": {
+      "status": "active",
+      "consecutive_failures": 0,
+      "consecutive_passes": 2,
+      "flakes": 0,
+      "runs": 2,
+      "fails": 0,
+      "quarantined_at": "0001-01-01T00:00:00Z",
+      "last_run": "2026-10-12T04:02:08.995910763Z"
+    }
+  },
+  "runs": 10
+}

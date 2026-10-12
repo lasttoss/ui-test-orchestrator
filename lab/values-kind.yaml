@@ -1,0 +1,18 @@
+# Values for a kind cluster, kept in one file so that a `--set` in a demo changes exactly one thing.
+image:
+  repository: ui-test-orchestrator
+  tag: local
+  pullPolicy: IfNotPresent
+appURL: http://fixture.uito.svc.cluster.local:8080
+scenariosDir: /scenarios
+chrome:
+  enabled: true
+  image: zenika/alpine-chrome:with-playwright
+  tag: latest
+resources:
+  requests:
+    cpu: 200m
+    memory: 256Mi
+  limits:
+    cpu: "1"
+    memory: 1Gi

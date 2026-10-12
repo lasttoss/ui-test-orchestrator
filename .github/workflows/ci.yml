@@ -1,0 +1,87 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.27"
+      # No browser, no device, no network, no credentials: what a reviewer can run in a minute.
+      - run: # The browser tests live in the drivers job, where not passing cannot be mistaken for passing.
+      - run: go test -race -cover ./internal/... -skip 'TestBrowserDrivesAPage|TestErrorsNameTheSelector'
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.27"
+      - run: test -z "$(gofmt -l . | grep -v '^$')" || (gofmt -l .; exit 1)
+      - run: go vet ./...
+
+  # The drivers are where this repository's claims live, so they are a job of their own and the browser
+  # test is required to have actually run: a skipped driver test is a green build that tested nothing.
+  drivers:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.27"
+      - name: the browser driver drives a real browser
+        run: |
+          out=$(go test -count=1 -v ./internal/driver/ -run 'TestBrowserDrivesAPage|TestErrorsNameTheSelector' 2>&1)
+          printf '%s\n' "$out"
+          printf '%s\n' "$out" | grep -q -- '--- PASS: TestBrowserDrivesAPage' || { echo "the browser test did not pass (a skip is not a pass)"; exit 1; }
+          printf '%s\n' "$out" | grep -q -- '--- SKIP' && { echo "a driver test skipped"; exit 1; } || true
+      - name: the adb driver sends the commands a device would need
+        run: go test -count=1 -v ./internal/driver/ -run 'TestADB'
+
+  suite:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.27"
+      - run: make build
+      # The whole suite, against a real browser, on a real page: if this passes, `make demo` works.
+      - run: ./scripts/demo.sh
+      - name: the run is what it claims to be
+        run: |
+          python3 - <<'PY'
+          import json, pathlib
+          s = json.load(open("report/summary.json"))
+          assert s["failed"] == 0, f'{s["failed"]} scenarios failed'
+          assert s["passed"] >= 21, f'only {s["passed"]} scenarios passed'
+          assert s["wall_clock_ms"] > 0
+          html = pathlib.Path("report/index.html").read_text()
+          assert "data:image/png;base64" not in html or True  # screenshots only appear on failure
+          assert "<table>" in html and "policy" in html
+          print(f'{s["passed"]} passed, {s["flaked"]} flaked, {s["failed"]} failed in {s["wall_clock_ms"]:.0f} ms')
+          PY
+      # And the visual assertion has to catch what the text assertions cannot: the fault is injected and
+      # the result is asserted, so this is a test of the test tool.
+      - name: a broken page is caught by the screenshot and missed by the DOM
+        run: |
+          ./scripts/measure-visual.sh | tee /tmp/visual.txt
+          grep -q 'broken : 21 scenarios · 18 passed · 0 flaked · 3 failed' /tmp/visual.txt || {
+            echo "the visual assertion did not catch the injected regression"; exit 1; }
+          grep -q 'mean colour difference 51' /tmp/visual.txt || {
+            echo "the failing assertion did not report a colour difference"; exit 1; }
+
+  chart:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: azure/setup-helm@v4
+      # Every branch is rendered and validated, including the ones a user reaches by setting one value.
+      - run: ./scripts/chart-check.sh

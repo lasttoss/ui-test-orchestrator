@@ -1,0 +1,12 @@
+name: the status badge inside the panel, not anywhere on the page
+url: /
+tags: [visual]
+steps:
+  - action: assert_image
+    template: badge-healthy.png
+    threshold: 0.9
+    region:
+      x: 0
+      y: 150
+      w: 760
+      h: 480

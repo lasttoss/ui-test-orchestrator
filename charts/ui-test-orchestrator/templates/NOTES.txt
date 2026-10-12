@@ -1,0 +1,12 @@
+The suite runs as a Job: {{ include "uito.fullname" . }}-suite
+  kubectl logs -n {{ .Release.Namespace }} job/{{ include "uito.fullname" . }}-suite
+The report is written to /report inside the pod. To read it without a port-forward:
+
+  kubectl cp {{ .Release.Namespace }}/$(kubectl get pod -n {{ .Release.Namespace }} -l app.kubernetes.io/name={{ include "uito.name" . }} -o name | head -1 | cut -d/ -f2):/report ./report
+
+{{- if .Values.cronJob.enabled }}
+A CronJob also runs it on {{ .Values.cronJob.schedule }}.
+{{- end }}
+{{- if not .Values.chrome.enabled }}
+Chrome is disabled: pass cdpURL to your own browser, or the suite has nothing to drive.
+{{- end }}

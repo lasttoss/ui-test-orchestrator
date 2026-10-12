@@ -1,0 +1,10 @@
+name: the header offers three tabs
+url: /
+tags: [smoke, nav]
+steps:
+  - action: assert_visible
+    selector: "[data-testid=tab-events]"
+  - action: assert_visible
+    selector: "[data-testid=tab-config]"
+  - action: assert_visible
+    selector: "[data-testid=tab-audit]"

@@ -1,0 +1,6 @@
+name: the application answers
+url: /
+tags: [smoke]
+steps:
+  - action: assert_visible
+    selector: "body"

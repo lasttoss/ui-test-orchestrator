@@ -1,0 +1,15 @@
+name: filtering and loading the table in one scenario
+url: /
+tags: [events, form]
+steps:
+  - action: fill
+    selector: "[data-testid=filter]"
+    value: deploy
+  - action: click
+    selector: "[data-testid=load]"
+  - action: assert_eventually
+    timeout: 8s
+    steps:
+      - action: assert_text
+        selector: "[data-testid=rows]"
+        text: nakama-go kit v0.4.1-dev

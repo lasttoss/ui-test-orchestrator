@@ -1,0 +1,16 @@
+name: switching tabs does not lose the loaded rows
+url: /
+tags: [events, nav]
+steps:
+  - action: click
+    selector: "[data-testid=load]"
+  - action: assert_eventually
+    timeout: 8s
+    steps:
+      - action: assert_visible
+        selector: "[data-testid=rows]"
+  - action: click
+    selector: "[data-testid=tab-config]"
+  - action: assert_text
+    selector: "[data-testid=rows]"
+    text: ev-1041

@@ -1,0 +1,12 @@
+name: a loaded row shows the deployment
+url: /
+tags: [events]
+steps:
+  - action: click
+    selector: "[data-testid=load]"
+  - action: assert_eventually
+    timeout: 8s
+    steps:
+      - action: assert_text
+        selector: "[data-testid=rows]"
+        text: game-api v1.9.2-dev

@@ -1,0 +1,19 @@
+name: the table reloads without breaking
+url: /
+tags: [events]
+steps:
+  - action: click
+    selector: "[data-testid=load]"
+  - action: assert_eventually
+    timeout: 8s
+    steps:
+      - action: assert_visible
+        selector: "[data-testid=rows]"
+  - action: click
+    selector: "[data-testid=load]"
+  - action: assert_eventually
+    timeout: 8s
+    steps:
+      - action: assert_text
+        selector: "[data-testid=rows]"
+        text: lobby pool 3 -> 5

@@ -1,0 +1,7 @@
+name: the filter starts empty
+url: /
+tags: [panel, form]
+steps:
+  - action: assert_text
+    selector: "[data-testid=echo]"
+    text: nothing typed yet

@@ -1,0 +1,9 @@
+name: a loaded row shows the deployment (asserting immediately)
+url: /
+tags: [events, naive]
+steps:
+  - action: click
+    selector: "[data-testid=load]"
+  - action: assert_text
+    selector: "[data-testid=rows]"
+    text: game-api v1.9.2-dev

@@ -1,0 +1,13 @@
+name: the table reloads (asserting immediately)
+url: /
+tags: [events, naive]
+steps:
+  - action: click
+    selector: "[data-testid=load]"
+  - action: assert_visible
+    selector: "[data-testid=rows]"
+  - action: click
+    selector: "[data-testid=load]"
+  - action: assert_text
+    selector: "[data-testid=rows]"
+    text: lobby pool 3 -> 5

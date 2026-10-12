@@ -1,0 +1,9 @@
+name: a tab can be clicked by its label
+url: /
+tags: [nav]
+steps:
+  - action: click
+    selector: "text=Config"
+  - action: assert_text
+    selector: "#heading"
+    text: Config (active)

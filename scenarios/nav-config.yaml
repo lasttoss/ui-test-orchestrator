@@ -1,0 +1,9 @@
+name: clicking Config switches the heading
+url: /
+tags: [nav]
+steps:
+  - action: click
+    selector: "[data-testid=tab-config]"
+  - action: assert_text
+    selector: "#heading"
+    text: Config (active)

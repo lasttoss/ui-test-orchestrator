@@ -1,0 +1,12 @@
+name: the events table, waited for 250 ms (shorter than the endpoint takes)
+url: /
+tags: [events, flaky]
+steps:
+  - action: click
+    selector: "[data-testid=load]"
+  - action: assert_eventually
+    timeout: 250ms
+    poll: 60ms
+    steps:
+      - action: assert_visible
+        selector: "[data-testid=rows]"

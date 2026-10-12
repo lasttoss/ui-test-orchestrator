@@ -1,0 +1,9 @@
+name: the panel loads
+url: /
+tags: [smoke]
+steps:
+  - action: assert_text
+    selector: "#heading"
+    text: Events
+  - action: assert_visible
+    selector: "text=Live operations"

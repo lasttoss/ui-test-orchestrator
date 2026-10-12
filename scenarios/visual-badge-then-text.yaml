@@ -1,0 +1,10 @@
+name: the badge is the right colour and still says healthy
+url: /
+tags: [visual, panel]
+steps:
+  - action: assert_text
+    selector: "[data-testid=status-badge]"
+    text: healthy
+  - action: assert_image
+    template: badge-healthy.png
+    threshold: 0.9

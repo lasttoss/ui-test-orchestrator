@@ -1,0 +1,10 @@
+name: typing in the filter reaches the page
+url: /
+tags: [panel, form]
+steps:
+  - action: fill
+    selector: "[data-testid=filter]"
+    value: deploy
+  - action: assert_text
+    selector: "[data-testid=echo]"
+    text: "typed: deploy"

@@ -1,0 +1,13 @@
+name: a row, waited for 250 ms (shorter than the endpoint takes)
+url: /
+tags: [events, flaky]
+steps:
+  - action: click
+    selector: "[data-testid=load]"
+  - action: assert_eventually
+    timeout: 250ms
+    poll: 60ms
+    steps:
+      - action: assert_text
+        selector: "#rows-body"
+        text: game-api v1.9.2-dev

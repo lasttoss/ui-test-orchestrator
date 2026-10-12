@@ -1,0 +1,7 @@
+name: the status badge says healthy
+url: /
+tags: [smoke, panel]
+steps:
+  - action: assert_text
+    selector: "[data-testid=status-badge]"
+    text: healthy

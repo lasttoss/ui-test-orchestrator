@@ -1,0 +1,14 @@
+name: clicking back to Events after Audit
+url: /
+tags: [nav]
+steps:
+  - action: click
+    selector: "[data-testid=tab-audit]"
+  - action: assert_text
+    selector: "#heading"
+    text: Audit (active)
+  - action: click
+    selector: "[data-testid=tab-events]"
+  - action: assert_text
+    selector: "#heading"
+    text: Events (active)
