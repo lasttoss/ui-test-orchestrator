@@ -131,8 +131,20 @@ jobs:
           }
           grep -q 'broken : 21 scenarios · 18 passed · 0 flaked · 3 failed' /tmp/visual.txt \
             || report "the visual assertion did not catch the injected regression" "18 passed, 3 failed"
-          grep -q 'mean colour difference 51' /tmp/visual.txt \
-            || report "the failing assertion did not report a colour difference" "a mean colour difference of about 51"
+          # Not an exact number. The mean colour difference of the same injected fault is 51.7 on
+          # the machine that captured the templates and 71.9 on the runner, because anti-aliasing
+          # differs between browser builds - asserting the number would be asserting the browser.
+          # What matters is that the failure is about colour at all, and by more than the delta the
+          # scenario allows, so that is what is asserted, and the number is printed either way.
+          delta=$(grep -om1 'mean colour difference [0-9.]*' /tmp/visual.txt | grep -o '[0-9.]*' | head -1)
+          [ -n "$delta" ] || report "the failing assertion did not report a colour difference" "any mean colour difference"
+          python3 -c "
+import sys
+d = float('$delta')
+if d <= 20:
+    sys.exit(f'the failing assertion reported a mean colour difference of {d}, which is not a visible difference')
+print(f'the broken badge was reported at a mean colour difference of {d}')" \
+            || report "the reported colour difference was too small to be the injected fault" "more than 20"
 
   image:
     runs-on: ubuntu-latest
