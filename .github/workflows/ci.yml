@@ -138,12 +138,7 @@ jobs:
           # scenario allows, so that is what is asserted, and the number is printed either way.
           delta=$(grep -om1 'mean colour difference [0-9.]*' /tmp/visual.txt | grep -o '[0-9.]*' | head -1)
           [ -n "$delta" ] || report "the failing assertion did not report a colour difference" "any mean colour difference"
-          python3 -c "
-import sys
-d = float('$delta')
-if d <= 20:
-    sys.exit(f'the failing assertion reported a mean colour difference of {d}, which is not a visible difference')
-print(f'the broken badge was reported at a mean colour difference of {d}')" \
+          python3 -c "import sys; d = float('$delta'); print('the broken badge was reported at a mean colour difference of ' + str(d)) if d > 20 else sys.exit('the failing assertion reported a mean colour difference of ' + str(d) + ', which is not a visible difference')" \
             || report "the reported colour difference was too small to be the injected fault" "more than 20"
 
   image:
