@@ -31,6 +31,14 @@ type Options struct {
 	MaxDelta    float64
 	ArtifactDir string
 	Timeout     time.Duration
+	// ImageThreshold, when set, replaces the template-match threshold every visual assertion
+	// declares. It exists for one reason: a visual assertion is calibrated against the browser
+	// build that captured the template, and a lab that runs the same suite against another browser
+	// (the compose file attaches to chromedp's headless shell) renders the same page a little
+	// differently - measured here, the same badge matched at 0.73 instead of 1.00. Lowering the
+	// threshold is a deliberate, visible act: every run that sets it says so in the output and in
+	// every failure note, so an override cannot be mistaken for a strict pass.
+	ImageThreshold float64
 }
 
 // StepResult records one step, including the ones that passed: a report that lists only failures cannot
@@ -64,6 +72,14 @@ type Outcome struct {
 }
 
 // Summary is the whole run.
+// DefaultViewport is the canvas every scenario runs on unless it declares its own. It is a size, not
+// a window: SetViewport uses the DevTools emulation override, so the browser's window does not
+// matter.
+var DefaultViewport = struct {
+	Width  int
+	Height int
+}{Width: 1280, Height: 900}
+
 type Summary struct {
 	Outcomes    []Outcome `json:"outcomes"`
 	WallClockMS float64   `json:"wall_clock_ms"`
@@ -172,8 +188,18 @@ func runAttempt(ctx context.Context, opts Options, spec *scenario.Scenario, outc
 	}
 	defer func() { _ = d.Stop(context.Background()) }()
 
+	// Every run gets the same canvas, whether the browser was launched or attached to. A visual
+	// assertion with a fixed region is a statement about a page layout, and leaving the viewport to
+	// whatever the browser happens to default to makes that statement depend on the browser: the
+	// four visual scenarios here passed on the machine that captured their templates and failed
+	// against an attached browser with an 800x600 window, because a region at y=150 with height 480
+	// does not fit in 600 pixels.
+	width, height := DefaultViewport.Width, DefaultViewport.Height
 	if spec.Viewport.Width > 0 && spec.Viewport.Height > 0 {
-		if err := d.SetViewport(ctx, spec.Viewport.Width, spec.Viewport.Height); err != nil {
+		width, height = spec.Viewport.Width, spec.Viewport.Height
+	}
+	if width > 0 && height > 0 {
+		if err := d.SetViewport(ctx, width, height); err != nil {
 			return nil, err
 		}
 	}
@@ -317,8 +343,16 @@ func assertImage(ctx context.Context, opts Options, step scenario.Step, d driver
 		return err
 	}
 	threshold := step.ThresholdOf()
+	if opts.ImageThreshold > 0 {
+		threshold = opts.ImageThreshold
+	}
 	note := fmt.Sprintf("best match %.3f at (%d,%d), mean colour difference %.1f, threshold %.2f, max delta %.0f",
 		found.Score, found.X, found.Y, found.Delta, threshold, opts.MaxDelta)
+	if opts.ImageThreshold > 0 {
+		// The note has to carry the override: a report that says "threshold 0.60" without saying
+		// whose threshold it is looks like a test that passed on its own terms.
+		note += fmt.Sprintf(" (run threshold %.2f overrides the scenario's %.2f)", opts.ImageThreshold, step.ThresholdOf())
+	}
 	outcome.ImageNote = note
 	if !found.Passes(threshold, opts.MaxDelta) {
 		// A picture of what it saw, with the match boxed, so the failure can be judged by looking.

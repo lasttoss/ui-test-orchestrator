@@ -24,6 +24,29 @@ coverage: ## Coverage per package, and a total
 	@go test -cover ./internal/... 2>&1 | tee /tmp/uito-cover.txt
 	@echo "total: $$(go test -coverprofile=/tmp/uito.cov ./internal/... >/dev/null 2>&1; go tool cover -func=/tmp/uito.cov | tail -1)"
 
+COMPOSE ?= docker compose
+
+.PHONY: up
+up: ## Start the browser sidecar and the fixture app in the background, and wait for both
+	@$(COMPOSE) down --remove-orphans >/dev/null 2>&1 || true
+	@$(COMPOSE) up -d --build browser fixture >/dev/null
+	@ok=0; for i in $$(seq 1 60); do \
+	  if curl -fsS http://127.0.0.1:19222/json/version >/dev/null 2>&1; then ok=1; break; fi; \
+	  sleep 0.5; \
+	done; \
+	if [ $$ok -eq 1 ]; then echo "  the browser sidecar answers (published on 127.0.0.1:19222)"; else \
+	  echo "  the browser sidecar never answered:"; $(COMPOSE) logs browser 2>&1 | tail -6 | sed 's/^/    /'; $(COMPOSE) down >/dev/null 2>&1; exit 1; fi
+	@$(COMPOSE) ps
+
+.PHONY: down
+down: ## Stop the containers
+	@$(COMPOSE) down --remove-orphans
+
+.PHONY: compose-suite
+compose-suite: up ## Run the whole suite in containers, against the browser sidecar
+	@$(COMPOSE) up --build --abort-on-container-exit --exit-code-from suite suite
+	@$(COMPOSE) down --remove-orphans >/dev/null 2>&1 || true
+
 .PHONY: demo
 demo: ## Serve the fixture app and run the whole suite against it
 	@./scripts/demo.sh

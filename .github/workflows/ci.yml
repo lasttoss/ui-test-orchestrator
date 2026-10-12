@@ -103,6 +103,20 @@ jobs:
           grep -q 'mean colour difference 51' /tmp/visual.txt || {
             echo "the failing assertion did not report a colour difference"; exit 1; }
 
+  image:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # The image is a deliverable, so it is run: the check asserts it answers as nonroot rather
+      # than reading the Dockerfile and believing it.
+      - name: the image runs as nonroot and serves the fixture app
+        run: make image
+      # And the suite has to work the way the chart runs it: this image, attaching to a browser
+      # sidecar over the DevTools protocol. Without this, the compose file is the only place that
+      # arrangement is written down.
+      - name: the whole suite in containers, against a browser sidecar
+        run: make compose-suite
+
   chart:
     runs-on: ubuntu-latest
     steps:

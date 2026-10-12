@@ -17,6 +17,40 @@ make policy      # quarantine and release, in transitions you can reproduce
 make test        # unit tests: no browser, no cluster, no credentials
 ```
 
+## Two ways to run the suite
+
+`make demo` runs on the host against the browser on the machine, and it is where the numbers in this
+README come from. `make up` and `make compose-suite` run the same suite as containers, which is one
+command on a machine that has Docker and nothing else - and, more usefully, they run it the way the
+chart does: this image, attaching to a browser over the DevTools protocol rather than carrying one.
+
+```
+make up            # the browser sidecar and the fixture app, waiting until both answer
+make compose-suite # the whole suite against them; the exit code is the suite's
+make down
+make image         # build the image, then check it runs as nonroot and serves the fixture app
+```
+
+Three things about that arrangement were learned by running it, and each was a failure first:
+
+* **The browser is reached by IP, not by name.** Chrome's DevTools endpoint answers `500 Host header
+  is specified and is not an IP address or localhost` to a request whose `Host` is a container name,
+  so `http://browser:9222` cannot work however the network is arranged. Every service has a static
+  address on the lab's own subnet, which also keeps the lab off the host's ports - an earlier version
+  published 8080 and the suite spent one run testing somebody else's API.
+* **Every step gets the same canvas.** The visual scenarios declare a region, not a viewport, so the
+  viewport used to be whatever the browser defaulted to; against an attached browser with an 800x600
+  window, a region at y=150 with height 480 does not fit, and one scenario failed with "region is
+  outside the 800x600 screenshot". `runner.DefaultViewport` is 1280x900 for every run now, and a
+  scenario can still declare its own.
+* **The pixel threshold is calibrated per browser build, and the lab says so.** In the container the
+  same badge matched at 0.73 against a 0.90 threshold, because the committed templates were captured
+  with the browser `make demo` launches and the sidecar is Chrome 156. The lab sets
+  `UITO_IMAGE_THRESHOLD=0.6`; the run prints a warning and every note carries
+  "run threshold 0.60 overrides the scenario's 0.90", so a relaxed number cannot be read as a strict
+  pass. The seventeen DOM scenarios are unaffected.
+
+
 ## What this demonstrates
 
 | capability | how it is done here | where |

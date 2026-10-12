@@ -15,6 +15,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -26,6 +27,19 @@ import (
 	"github.com/lasttoss/ui-test-orchestrator/internal/runner"
 	"github.com/lasttoss/ui-test-orchestrator/internal/scenario"
 )
+
+// envFloat reads a float from the environment, for settings a container has no flag for.
+func envFloat(name string, fallback float64) float64 {
+	raw := os.Getenv(name)
+	if raw == "" {
+		return fallback
+	}
+	v, err := strconv.ParseFloat(raw, 64)
+	if err != nil {
+		return fallback
+	}
+	return v
+}
 
 func main() {
 	if err := run(os.Args[1:]); err != nil {
@@ -54,22 +68,23 @@ func run(args []string) error {
 }
 
 type runFlags struct {
-	scenarios string
-	baseURL   string
-	templates string
-	parallel  int
-	attempts  int
-	browser   string
-	cdpURL    string
-	reportDir string
-	artifacts string
-	state     string
-	noState   bool
-	tag       string
-	name      string
-	maxDelta  float64
-	jsonOut   string
-	quiet     bool
+	scenarios      string
+	baseURL        string
+	templates      string
+	parallel       int
+	attempts       int
+	browser        string
+	cdpURL         string
+	reportDir      string
+	artifacts      string
+	state          string
+	noState        bool
+	tag            string
+	name           string
+	maxDelta       float64
+	imageThreshold float64
+	jsonOut        string
+	quiet          bool
 }
 
 func runSuite(args []string) error {
@@ -89,6 +104,10 @@ func runSuite(args []string) error {
 	fs.StringVar(&f.tag, "tag", "", "only run scenarios with this tag")
 	fs.StringVar(&f.name, "name", "", "only run scenarios whose id contains this")
 	fs.Float64Var(&f.maxDelta, "max-delta", 40, "largest mean colour difference a visual match may have")
+	// The env fallback is what a compose file or a CI job uses, because it has no place to put a
+	// flag: the suite service runs a fixed command.
+	fs.Float64Var(&f.imageThreshold, "image-threshold", envFloat("UITO_IMAGE_THRESHOLD", 0),
+		"override every visual assertion's threshold (0 = use each scenario's); a lab against another browser build needs it, and every note it appears in says so")
 	fs.StringVar(&f.jsonOut, "json", "", "also write the summary JSON here")
 	fs.BoolVar(&f.quiet, "quiet", false, "only print the summary line")
 	if err := fs.Parse(args); err != nil {
@@ -129,10 +148,15 @@ func runSuite(args []string) error {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
+	if f.imageThreshold > 0 {
+		fmt.Fprintf(os.Stderr, "warning: image threshold overridden to %.2f for this run; the visual assertions are calibrated for the browser build that captured the templates\n", f.imageThreshold)
+	}
+
 	summary, err := runner.Run(ctx, runner.Options{
 		Scenarios: selected, BaseURL: f.baseURL, TemplatesDir: f.templates,
 		Attempts: f.attempts, Parallel: f.parallel, MaxDelta: f.maxDelta,
-		ArtifactDir: f.artifacts,
+		ImageThreshold: f.imageThreshold,
+		ArtifactDir:    f.artifacts,
 		NewDriver: func() driver.Driver {
 			return &driver.Chromium{Binary: binary, CDPURL: f.cdpURL, Timeout: 60 * time.Second}
 		},

@@ -1,0 +1,95 @@
+# The suite the way the chart runs it: a browser sidecar, the fixture app, and this image attaching
+# to the browser over the DevTools protocol instead of carrying one.
+#
+# The split is deliberate rather than a container trick. A browser inside the image would drag in a
+# libc, a font set and a sandbox that all need patching, and the image would stop being the small
+# distroless thing that runs as nonroot. Keeping the browser as a sidecar also makes the CI
+# question answerable: the same suite runs against the browser on the runner (the `suite` job) and
+# against the one in this file.
+#
+# Two things in here were learned by running it, and both were failures first:
+#
+#   * The browser has a static IP and the suite talks to it by IP. Chrome's DevTools endpoint
+#     answers 500 "Host header is specified and is not an IP address or localhost" to a request
+#     whose Host header is a container name, so `http://browser:9222` cannot work however the
+#     network is arranged. An address from the lab's own subnet is accepted, and unlike host
+#     networking it cannot collide with whatever else is running on the machine.
+#   * The fixture app is on the internal network, so it does not need a host port at all. An
+#     earlier version published 8080 and the suite spent a run testing somebody else's API, which
+#     is why every scenario failed with "nothing matches [data-testid=load]".
+#
+#   make up            # browser and fixture, in the background, waiting until both answer
+#   make compose-suite # the whole suite against them, exit code from the suite
+#   make down
+networks:
+  lab:
+    ipam:
+      config:
+        - subnet: 10.77.0.0/24
+
+services:
+  browser:
+    # chromedp's own headless shell: the same DevTools protocol surface the driver speaks, without
+    # a desktop, a window manager or a display.
+    image: chromedp/headless-shell:stable
+    # No command override: this image's entrypoint is a socat wrapper that forwards its own port to
+    # the browser it starts. Replacing the command with browser flags leaves the wrapper forwarding
+    # to a port nothing listens on, and every scenario fails with "no browser at
+    # http://.../json/version: EOF" in fourteen milliseconds.
+    networks:
+      lab:
+        ipv4_address: 10.77.0.2
+    # Also published, on a port nothing else uses, so `make up` can wait for the browser from the
+    # host. A container address on a private network is not reachable from every machine this runs
+    # on (it is not reachable from a host that is itself inside a container), and a readiness check
+    # that only works on some machines is worse than none.
+    ports:
+      - "127.0.0.1:19222:9222"
+
+  fixture:
+    image: ui-test-orchestrator:local
+    build: .
+    command: ["serve", "--addr", "0.0.0.0:8080"]
+    # A static address for every service, not just the browser. Docker's IPAM hands out .2 first, so
+    # when the browser reserves .2 and the fixture is created before it, the fixture has already
+    # taken it and the browser fails with "Address already in use" - a race that only shows up when
+    # both are started in one command.
+    networks:
+      lab:
+        ipv4_address: 10.77.0.3
+    # No compose healthcheck: there is no shell in a distroless image to run one with. The suite
+    # retries its first request, which is the health check that matters.
+
+  suite:
+    image: ui-test-orchestrator:local
+    build: .
+    depends_on: [browser, fixture]
+    entrypoint: ["/usr/local/bin/orchestrator"]
+    networks:
+      lab:
+        ipv4_address: 10.77.0.4
+    # The threshold override is here, not in the scenarios: this lab runs against chromedp's
+    # headless shell (Chrome 156) while the committed templates were captured with the browser `make
+    # demo` launches, and the same badge matched at 0.73 here against a 0.90 threshold. Lowering it
+    # in the lab keeps the seventeen DOM scenarios strict and the four visual ones honest about
+    # being calibrated elsewhere - the runner prints a warning and writes the override into every
+    # note it appears in.
+    environment:
+      UITO_IMAGE_THRESHOLD: "0.6"
+    command:
+      - run
+      - --base-url=http://fixture:8080
+      - --cdp-url=http://10.77.0.2:9222
+      - --scenarios=/app/scenarios
+      - --report=/app/report
+      - --state=/app/state/quarantine.json
+    # The report lands in a bind mount owned by whoever ran this, and the image runs as nonroot.
+    # The chart mounts an emptyDir and never needs this; the lab writes into its own ./report.
+    user: "0:0"
+    volumes:
+      - ./scenarios:/app/scenarios:ro
+      # The templates the visual assertions compare against. A container that has the scenarios but
+      # not the templates runs seventeen scenarios and fails the four that look at pixels.
+      - ./testdata:/app/testdata:ro
+      - ./report:/app/report
+      - ./state:/app/state
