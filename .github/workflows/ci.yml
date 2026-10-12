@@ -36,7 +36,15 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: "1.27"
+      # The runner's own browsers are not something this repository should assume: when none is
+      # found the driver test skips, a skip is not a pass, and this step fails with "the browser
+      # test did not pass". Install one and point the driver at it, so the failure can only mean
+      # the driver is broken rather than the image.
+      - uses: browser-actions/setup-chrome@v1
+        id: chrome
       - name: the browser driver drives a real browser
+        env:
+          UITO_BROWSER: ${{ steps.chrome.outputs.chrome-path }}
         run: |
           out=$(go test -count=1 -v ./internal/driver/ -run 'TestBrowserDrivesAPage|TestErrorsNameTheSelector' 2>&1)
           printf '%s\n' "$out"
@@ -52,6 +60,8 @@ jobs:
       # with those two skipped, so the same package reads 69.8% locally and 25.1% in CI. This step
       # runs the package whole and prints the number the README means, so they cannot look like drift.
       - name: the driver's whole-package coverage
+        env:
+          UITO_BROWSER: ${{ steps.chrome.outputs.chrome-path }}
         run: go test -count=1 -cover ./internal/driver/
 
   suite:
@@ -61,9 +71,13 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: "1.27"
+      - uses: browser-actions/setup-chrome@v1
+        id: chrome
       - run: make build
       # The whole suite, against a real browser, on a real page: if this passes, `make demo` works.
       - run: ./scripts/demo.sh
+        env:
+          UITO_BROWSER: ${{ steps.chrome.outputs.chrome-path }}
       - name: the run is what it claims to be
         run: |
           python3 - <<'PY'
@@ -80,6 +94,8 @@ jobs:
       # And the visual assertion has to catch what the text assertions cannot: the fault is injected and
       # the result is asserted, so this is a test of the test tool.
       - name: a broken page is caught by the screenshot and missed by the DOM
+        env:
+          UITO_BROWSER: ${{ steps.chrome.outputs.chrome-path }}
         run: |
           ./scripts/measure-visual.sh | tee /tmp/visual.txt
           grep -q 'broken : 21 scenarios · 18 passed · 0 flaked · 3 failed' /tmp/visual.txt || {
