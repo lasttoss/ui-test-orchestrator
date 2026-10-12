@@ -116,11 +116,23 @@ jobs:
         env:
           UITO_BROWSER: ${{ steps.chrome.outputs.chrome-path }}
         run: |
+          set -o pipefail
           ./scripts/measure-visual.sh | tee /tmp/visual.txt
-          grep -q 'broken : 21 scenarios · 18 passed · 0 flaked · 3 failed' /tmp/visual.txt || {
-            echo "the visual assertion did not catch the injected regression"; exit 1; }
-          grep -q 'mean colour difference 51' /tmp/visual.txt || {
-            echo "the failing assertion did not report a colour difference"; exit 1; }
+          # A red run has to say what it saw. Job logs need admin rights to read, and a failure that
+          # can only be diagnosed by re-running it is how a CI failure turns into an afternoon: these
+          # annotations are readable from the API, and they carry the numbers the step compared.
+          report() {
+            summary=$(grep -m1 'broken :' /tmp/visual.txt || echo 'no summary line')
+            delta=$(grep -om1 'mean colour difference [0-9.]*' /tmp/visual.txt || echo 'no colour difference')
+            echo "::error::$1 | expected: $2 | saw: $summary | $delta"
+            echo "--- the last 25 lines of measure-visual.sh ---"
+            tail -25 /tmp/visual.txt
+            exit 1
+          }
+          grep -q 'broken : 21 scenarios · 18 passed · 0 flaked · 3 failed' /tmp/visual.txt \
+            || report "the visual assertion did not catch the injected regression" "18 passed, 3 failed"
+          grep -q 'mean colour difference 51' /tmp/visual.txt \
+            || report "the failing assertion did not report a colour difference" "a mean colour difference of about 51"
 
   image:
     runs-on: ubuntu-latest
