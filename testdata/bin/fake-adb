@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+# A fake adb, for the tests of the adb driver.
+#
+# The driver is real; the device is not. It records every command it is given, answers with the shape a
+# real adb answers with, and serves a small PNG for screencap. The test that uses this asserts the
+# commands the driver issued, which is the part that can be wrong in a driver no phone was attached to.
+set -euo pipefail
+log=${UITO_FAKE_ADB_LOG:-/tmp/uito-fake-adb.log}
+printf '%s\n' "$*" >> "$log"
+here=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+
+# -s <serial> may prefix everything.
+if [ "${1:-}" = "-s" ]; then shift 2; fi
+
+case "$*" in
+  "devices")
+    printf 'List of devices attached\nemulator-5554\tdevice\n\n'
+    ;;
+  "shell uiautomator dump"*)
+    printf 'UI hierchary dumped to: /sdcard/uito-dump.xml\n'
+    ;;
+  "exec-out cat /sdcard/uito-dump.xml")
+    cat <<'XML'
+<?xml version='1.0' encoding='UTF-8' standalone='yes' ?>
+<hierarchy rotation="0">
+  <node index="0" text="" resource-id="app:id/root" class="android.widget.FrameLayout" content-desc="" bounds="[0,0][1080,1920]">
+    <node index="1" text="Save" resource-id="app:id/save" class="android.widget.Button" content-desc="save button" bounds="[100,200][300,260]" />
+    <node index="2" text="Filter" resource-id="app:id/filter" class="android.widget.EditText" content-desc="" bounds="[100,300][500,360]" />
+  </node>
+</hierarchy>
+XML
+    ;;
+  "exec-out screencap -p")
+    cat "$here/fake-screen.png"
+    ;;
+  "shell am start"*|"shell input"*)
+    printf 'Starting: Intent { }\n'
+    ;;
+  *)
+    printf 'fake adb: unhandled: %s\n' "$*" >&2
+    exit 1
+    ;;
+esac

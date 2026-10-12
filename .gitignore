@@ -1,6 +1,6 @@
-bin/
-report/
-report-*/
+/bin/
+/report/
+/report-*/
 /tmp-*/
 *.tmp
-state/*.tmp
+/state/*.tmp
