@@ -94,6 +94,19 @@ VISION = Block("a visual assertion, two numbers", "correlation alone calls a bro
     ("...and mean colour difference 51.7", True),
     ("correlation is invariant to brightness", True),
     ("so a match needs both: score and delta", True),
+    ("same fault on the CI runner: delta 71.9", True),
+    ("a threshold is a statement about a browser", True),
+    ("build, so CI asserts \"delta > 20\", not 51", True),
+], tint="#fdf4ef")
+CANVAS = Block("the canvas every run shares", "1280x900, not the browser's default", [
+    ("a region without a viewport depended on", True),
+    ("the window the browser happened to have", True),
+    ("attach to an 800x600 shell and it fails:", True),
+    ("\"region is outside the 800x600 screenshot\"", True),
+    ("-image-threshold / UITO_IMAGE_THRESHOLD", True),
+    ("warns, and every note says whose number", True),
+    ("it is: \"run threshold 0.60 overrides the", True),
+    ("scenario's 0.90\"   <- declared, not quiet", True),
 ], tint="#fdf4ef")
 FLAKE = Block("the flake policy, in a committed file", "state/quarantine.json", [
     ("2 whole runs failing  ->  quarantine", True),
@@ -105,14 +118,16 @@ REPORT = Block("report/index.html", "one file, screenshots inlined", [
     ("pass · fail · flake · quarantined", True),
     ("what a visual failure actually saw", True),
 ])
+# Short, because the strip gives each claim a third of the figure's width and the guard below fails
+# the build rather than clipping one: the numbers are the point, and they are the part that stays.
 CLAIMS = [
-    "asserting at once is not flaky, it is a race: 24 of 24 failed, retry included",
-    "waiting 250 ms for a 900 ms endpoint flakes 43.8%; waiting 8 s flakes 0 of 168",
-    "on a page whose badge turned red, 18 of 21 scenarios passed: only the visual three noticed",
+    "asserting at once is a race: 24 of 24 failed",
+    "250 ms for a 900 ms endpoint: 43.8% flaked",
+    "a red badge: 18 of 21 still passed",
 ]
 
 col1 = max(CLIENT.w, RUNNER.w)
-col2 = max(DRIVER.w, VISION.w)
+col2 = max(DRIVER.w, VISION.w, CANVAS.w)
 col3 = max(FLAKE.w, REPORT.w)
 MARGIN, TOP = 28, 74
 x1 = MARGIN
@@ -122,8 +137,9 @@ total_w = x3 + col3 + MARGIN
 
 client_y, runner_y = TOP, TOP + CLIENT.h + 40
 driver_y, vision_y = TOP, TOP + DRIVER.h + 40
+canvas_y = vision_y + VISION.h + 40
 flake_y, report_y = TOP, TOP + FLAKE.h + 40
-strip_y = max(runner_y + RUNNER.h, vision_y + VISION.h, report_y + REPORT.h) + 42
+strip_y = max(runner_y + RUNNER.h, canvas_y + CANVAS.h, report_y + REPORT.h) + 42
 strip_h = 84
 H = strip_y + strip_h + 46
 
@@ -149,6 +165,7 @@ svg.append(CLIENT.render(x1, client_y))
 svg.append(RUNNER.render(x1, runner_y))
 svg.append(DRIVER.render(x2, driver_y))
 svg.append(VISION.render(x2, vision_y))
+svg.append(CANVAS.render(x2, canvas_y))
 svg.append(FLAKE.render(x3, flake_y))
 svg.append(REPORT.render(x3, report_y))
 
@@ -156,12 +173,19 @@ svg.append(arrow(x1 + col1, client_y + 40, x2, driver_y + 34, "steps"))
 svg.append(arrow(x2 + col2, driver_y + 34, x3, flake_y + 34, "outcomes"))
 svg.append(arrow(x1 + col1, runner_y + 34, x2, vision_y + 24, "attempts"))
 svg.append(arrow(x2 + col2, vision_y + 24, x3, report_y + 24, "numbers"))
-svg.append(text(MARGIN, H - 16, "make demo  ·  scripts/measure-visual.sh  ·  scripts/measure-flake.sh  ·  scripts/demo-policy.sh",
+svg.append(text(MARGIN, H - 16, "make demo  ·  make compose-suite  ·  scripts/measure-visual.sh  ·  scripts/measure-flake.sh",
                 size=11, fill=MUTED, family="mono"))
 svg.append(rect(MARGIN, strip_y, total_w - MARGIN * 2, strip_h))
 svg.append(text(MARGIN + PAD, strip_y + 26, "three rules this repository keeps, each one because breaking it produced a wrong number",
                 size=12.5, weight="600", fill=MUTED))
 chip_w = (total_w - MARGIN * 2 - PAD * 2 - 24) / 3
+# A generator that clips a claim is a generator that ships a figure nobody can read, and the clipping
+# is invisible in the HTML: it only shows in the export, which is the artefact people look at. This
+# fails instead, naming the claim that does not fit.
+for i, claim in enumerate(CLAIMS):
+    need = width(f"{i + 1}. {claim}", 11.5) + 20
+    if need > chip_w:
+        raise SystemExit(f"claim {i + 1} needs {need:.0f}px, the strip gives {chip_w:.0f}px: shorten it")
 for i, claim in enumerate(CLAIMS):
     cx = MARGIN + PAD + i * (chip_w + 12)
     svg.append(rect(cx, strip_y + 38, chip_w, 28, fill=TINT, stroke="#e8cdbd", rx=6))
@@ -173,7 +197,7 @@ meta = ('<!-- diagram-meta {"topic":"ui-test-orchestrator-flow","level":"runtime
         '"sources":["cmd/orchestrator/main.go","internal/scenario/scenario.go","internal/runner/runner.go",'
         '"internal/driver/cdp.go","internal/vision/vision.go","internal/flake/flake.go","internal/report/report.go",'
         '"internal/app/app.go","scenarios","scenarios-flaky","scripts/measure-visual.sh","scripts/measure-flake.sh",'
-        '"scripts/demo-policy.sh","state/quarantine.json","README.md"],'
+        '"scripts/demo-policy.sh","state/quarantine.json","Dockerfile","docker-compose.yml","Makefile",".github/workflows/ci.yml","README.md"],'
         '"updated":"2026-10-12"} -->')
 
 page = f"""{meta}

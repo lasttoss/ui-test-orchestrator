@@ -127,8 +127,10 @@ than a memory.
 **Figure 1.** A scenario file is run by a runner that executes several at once and gives every attempt a
 fresh browser. The driver speaks the DevTools protocol directly, and the same interface drives a phone
 over adb. A visual assertion reports two numbers because correlation alone called a red badge a pass.
-Outcomes go to the flake policy and to a report with its screenshots inlined. The three measurements at
-the bottom are the ones this repository is built around.
+Outcomes go to the flake policy and to a report with its screenshots inlined. Every run gets the same
+canvas, and a pixel threshold that was relaxed for a different browser build says so in the note it
+appears in rather than passing quietly. The three measurements at the bottom are the ones this
+repository is built around.
 
 ![ui-test-orchestrator: scenario files are run in parallel, each attempt getting a fresh browser; a hand-written DevTools protocol driver clicks with real mouse events and captures pixels; a visual assertion reports both a correlation of 0.999 and a mean colour difference of 51.7 because correlation is invariant to brightness; outcomes feed a flake policy in a committed file and a self-contained report; and three measurements are quoted, that an immediately-asserting check failed 24 of 24 runs even with a retry, that waiting 250 milliseconds for a 900 millisecond endpoint flaked 43.8 percent of runs against none of 168 when waiting 8 seconds, and that on a page whose badge turned red 18 of 21 scenarios still passed](docs/figures/ui-test-orchestrator-flow.png)
 
