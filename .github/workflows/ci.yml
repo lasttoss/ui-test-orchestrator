@@ -43,7 +43,16 @@ jobs:
           printf '%s\n' "$out" | grep -q -- '--- PASS: TestBrowserDrivesAPage' || { echo "the browser test did not pass (a skip is not a pass)"; exit 1; }
           printf '%s\n' "$out" | grep -q -- '--- SKIP' && { echo "a driver test skipped"; exit 1; } || true
       - name: the adb driver sends the commands a device would need
-        run: go test -count=1 -v ./internal/driver/ -run 'TestADB'
+        run: |
+          out=$(go test -count=1 -v ./internal/driver/ -run 'TestADB' 2>&1)
+          printf '%s\n' "$out"
+          printf '%s\n' "$out" | grep -q -- '--- PASS: TestADB' || { echo "the fake adb drove nothing"; exit 1; }
+          printf '%s\n' "$out" | grep -q -- '--- SKIP' && { echo "an adb test skipped"; exit 1; } || true
+      # `make coverage` prints the driver with the browser tests included; the unit job measures it
+      # with those two skipped, so the same package reads 69.8% locally and 25.1% in CI. This step
+      # runs the package whole and prints the number the README means, so they cannot look like drift.
+      - name: the driver's whole-package coverage
+        run: go test -count=1 -cover ./internal/driver/
 
   suite:
     runs-on: ubuntu-latest
