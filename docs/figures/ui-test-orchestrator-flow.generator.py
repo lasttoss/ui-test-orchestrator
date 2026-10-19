@@ -49,6 +49,24 @@ def arrow(x1, y1, x2, y2, label="", dashed=False):
     return "".join(out)
 
 
+def elbow(x1, y1, x2, y2, label="", dashed=False):
+    """An arrow that goes right, down the gap between columns, then right: a straight line from a block
+    at the top to a block at the bottom crosses the boxes in between, which reads as a claim about
+    them."""
+    dash = ' stroke-dasharray="5 4"' if dashed else ""
+    xm = (x1 + x2) / 2
+    out = [f'<polyline points="{x1:.0f},{y1:.0f} {xm:.0f},{y1:.0f} {xm:.0f},{y2:.0f} {x2:.0f},{y2:.0f}" '
+           f'fill="none" stroke="{MUTED}" stroke-width="1.6" marker-end="url(#arrowhead)"{dash}/>']
+    if label:
+        # The label sits just above where the arrow lands, in the gap: the middle of the vertical run is
+        # where the neighbouring straight arrows pass, and a label on top of one of those reads as
+        # labelling it.
+        lw = width(label, 11, "mono") + 12
+        out.append(rect(xm - lw / 2, y2 - 27, lw, 20, fill=PAPER, stroke="none", rx=5))
+        out.append(text(xm, y2 - 13, label, size=11, fill=MUTED, family="mono", anchor="middle"))
+    return "".join(out)
+
+
 class Block:
     def __init__(self, title, subtitle, lines, tint=None):
         self.title, self.subtitle, self.lines, self.tint = title, subtitle, lines, tint
@@ -118,6 +136,14 @@ REPORT = Block("report/index.html", "one file, screenshots inlined", [
     ("pass · fail · flake · quarantined", True),
     ("what a visual failure actually saw", True),
 ])
+# The other way a run reaches this repository: a device run leaves a log in a format of its own, and a
+# log nobody reads is an attachment rather than a gate.
+LOGFILE = Block("a log a device run left behind", "airtest log.txt, one JSON object per line", [
+    ("depth 1 rows, deeper lines become children", True),
+    ("a row with a traceback is the failure", True),
+    ("the last row is airtest's own verdict", True),
+    ("read back -> report-airtest, exit code 1", True),
+], tint=TINT)
 # Short, because the strip gives each claim a third of the figure's width and the guard below fails
 # the build rather than clipping one: the numbers are the point, and they are the part that stays.
 CLAIMS = [
@@ -128,7 +154,7 @@ CLAIMS = [
 
 col1 = max(CLIENT.w, RUNNER.w)
 col2 = max(DRIVER.w, VISION.w, CANVAS.w)
-col3 = max(FLAKE.w, REPORT.w)
+col3 = max(FLAKE.w, REPORT.w, LOGFILE.w)
 MARGIN, TOP = 28, 74
 x1 = MARGIN
 x2 = x1 + col1 + GAP
@@ -139,7 +165,8 @@ client_y, runner_y = TOP, TOP + CLIENT.h + 40
 driver_y, vision_y = TOP, TOP + DRIVER.h + 40
 canvas_y = vision_y + VISION.h + 40
 flake_y, report_y = TOP, TOP + FLAKE.h + 40
-strip_y = max(runner_y + RUNNER.h, canvas_y + CANVAS.h, report_y + REPORT.h) + 42
+log_y = report_y + REPORT.h + 40
+strip_y = max(runner_y + RUNNER.h, canvas_y + CANVAS.h, log_y + LOGFILE.h) + 42
 strip_h = 84
 H = strip_y + strip_h + 46
 
@@ -156,7 +183,10 @@ svg.append('<desc id="ui-test-orchestrator-flow-desc">A scenario file is execute
            'measurements at the bottom are the ones this repository is built around: a check that asserts immediately is a race '
            'rather than a flake and fails 24 of 24 runs even with a retry; waiting 250 milliseconds for a 900 millisecond '
            'endpoint flakes 43.8 percent of runs while waiting 8 seconds flakes none of 168; and on a page whose status badge '
-           'turned red, 18 of 21 scenarios still passed, because only the three visual ones looked.</desc>')
+           'turned red, 18 of 21 scenarios still passed, because only the three visual ones looked. A device run arrives the other way round: '
+           'it leaves an Airtest log in a format of its own, and this repository reads it back with Airtest own rules - a row at depth 1, '
+           'deeper lines as its children, a row whose data carries a traceback marked as the failure - then writes its own report and '
+           'returns the same exit code a browser run would, so a device run can gate a build instead of waiting to be looked at.</desc>')
 
 svg.append(f'<defs><marker id="arrowhead" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" '
            f'orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="{MUTED}"/></marker></defs>')
@@ -168,11 +198,13 @@ svg.append(VISION.render(x2, vision_y))
 svg.append(CANVAS.render(x2, canvas_y))
 svg.append(FLAKE.render(x3, flake_y))
 svg.append(REPORT.render(x3, report_y))
+svg.append(LOGFILE.render(x3, log_y))
 
 svg.append(arrow(x1 + col1, client_y + 40, x2, driver_y + 34, "steps"))
 svg.append(arrow(x2 + col2, driver_y + 34, x3, flake_y + 34, "outcomes"))
 svg.append(arrow(x1 + col1, runner_y + 34, x2, vision_y + 24, "attempts"))
 svg.append(arrow(x2 + col2, vision_y + 24, x3, report_y + 24, "numbers"))
+svg.append(elbow(x2 + col2, driver_y + 90, x3, log_y + 40, "a device run", dashed=True))
 svg.append(text(MARGIN, H - 16, "make demo  ·  make compose-suite  ·  scripts/measure-visual.sh  ·  scripts/measure-flake.sh",
                 size=11, fill=MUTED, family="mono"))
 svg.append(rect(MARGIN, strip_y, total_w - MARGIN * 2, strip_h))
@@ -197,8 +229,8 @@ meta = ('<!-- diagram-meta {"topic":"ui-test-orchestrator-flow","level":"runtime
         '"sources":["cmd/orchestrator/main.go","internal/scenario/scenario.go","internal/runner/runner.go",'
         '"internal/driver/cdp.go","internal/vision/vision.go","internal/flake/flake.go","internal/report/report.go",'
         '"internal/app/app.go","scenarios","scenarios-flaky","scripts/measure-visual.sh","scripts/measure-flake.sh",'
-        '"scripts/demo-policy.sh","state/quarantine.json","Dockerfile","docker-compose.yml","Makefile",".github/workflows/ci.yml","README.md"],'
-        '"updated":"2026-10-12"} -->')
+        '"scripts/demo-policy.sh","state/quarantine.json","internal/airtestlog/airtestlog.go","internal/airtestlog/report.go","internal/airtestlog/testdata","Dockerfile","docker-compose.yml","Makefile",".github/workflows/ci.yml","README.md"],'
+        '"updated":"2026-10-19"} -->')
 
 page = f"""{meta}
 <!DOCTYPE html>
