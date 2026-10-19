@@ -29,6 +29,21 @@ jobs:
 
   # The drivers are where this repository's claims live, so they are a job of their own and the browser
   # test is required to have actually run: a skipped driver test is a green build that tested nothing.
+  # Every command the README names, checked, and run where it can run without a browser or a container.
+  # Two sibling repositories shipped README commands that did not work - targets deleted from a Makefile,
+  # a target that died in a flag parser - and CI could not see either of them, because it runs a fixed
+  # list of targets rather than the commands the documentation promises.
+  readme:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # the figure checker compares the commit dates of a figure and its sources
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.27"
+      - run: make readme-check
+
   drivers:
     runs-on: ubuntu-latest
     steps:

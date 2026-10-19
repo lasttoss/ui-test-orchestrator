@@ -105,9 +105,22 @@ image: ## Build the image and prove it runs non-root and serves the fixture app
 	@./scripts/image.sh
 
 .PHONY: diagram
-diagram: ## Regenerate the figure and check it against its sources
+diagram: ## Regenerate the figure, re-export it, and check it against the sources it names
+	# The checker is in this repository, not on the machine of whoever wrote the figure: a target
+	# that needs ~/.pi is a target nobody else can run, and this one used to be exactly that.
 	@python3 docs/figures/ui-test-orchestrator-flow.generator.py
-	@bash ~/.pi/agent/scripts/diagram-freshness.sh 2>/dev/null | grep -E "FRESH|STALE|TOUCHED|NO-META" | sed 's/^/  /'
+	@python3 scripts/export-figure.py docs/figures/ui-test-orchestrator-flow.html
+	@python3 scripts/diagram-freshness.py .
+
+# Every command this README names has to resolve, and the ones that can run without a browser or a
+# container are run. Entries are ';'-separated; a leading '!' means the command must fail, because a
+# failing log that exits 0 would be the bug.
+README_RUN ?= make diagram; make test; !./bin/orchestrator airtest --log internal/airtestlog/testdata/airtest-log.txt --out /tmp/airtest-report
+README_SKIP ?= make demo | runs 21 scenarios against a browser: the suite job does it; make up | starts containers: the image job does it; make down | stops them; make compose-suite | the whole suite in containers: the image job does it; make visual | a browser and a live fixture; make flake | 168 runs of the four checks, about half an hour; make policy | six suite runs in a row; make image | builds and runs the image
+
+.PHONY: readme-check
+readme-check: build ## Every command this README names resolves, and the offline ones are run
+	@README_RUN='$(README_RUN)' README_SKIP='$(README_SKIP)' python3 scripts/readme-check.py .
 
 .PHONY: clean
 clean: ## Remove build output and reports

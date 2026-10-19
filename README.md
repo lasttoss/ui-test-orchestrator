@@ -15,6 +15,7 @@ make visual      # what a screenshot assertion catches that a text assertion can
 make flake       # the same four checks written two ways, with the flake rate of each
 make policy      # quarantine and release, in transitions you can reproduce
 make test        # unit tests: no browser, no cluster, no credentials
+make readme-check # every command named in this file resolves, and the offline ones are run
 ```
 
 ## Two ways to run the suite
@@ -61,6 +62,7 @@ Three things about that arrangement were learned by running it, and each was a f
 | **a flake policy with consequences** | retry, quarantine after two whole runs failing, release after three whole runs passing, all kept in a committed file; a quarantined failure does not fail the build but is still printed and still run | `internal/flake`, `state/quarantine.json` |
 | **a report you can send** | one HTML file with its screenshots inlined, plus a JSON summary a build system reads | `internal/report` |
 | **reading somebody else's log format** | a device-driven Airtest run leaves a log, and a log nobody reads is an attachment rather than a gate: the format is read back with Airtest's own rules, grouped into test cases, written as the same report, and returned as the same exit code | `internal/airtestlog` |
+| **commands that work, checked** | every command this file names is resolved, and the ones that need no browser and no container are run: a documented command that cannot run is a bug a reader would have found, so CI finds it first | `make readme-check` |
 | **measurements, not opinions** | what a visual assertion caught that text assertions did not, and how much of a "flake rate" was really a race | `scripts/measure-visual.sh`, `scripts/measure-flake.sh` |
 
 ## The measurements
@@ -216,8 +218,9 @@ is captured, and what to do when a visual assertion fails — are in
 | `docker-compose.yml` | n/a | the app under test is a fixture served in-process by `make demo`; a compose file would add a moving part to a demo that has none |
 | `Dockerfile` | ✅ | distroless nonroot, two stages: the orchestrator, and the fixture app, so the demo runs without a browser on the host |
 | Helm chart | ✅ | `charts/ui-test-orchestrator`: a Job and an optional CronJob, a NetworkPolicy that only allows the app under test, and the report kept in a volume; every branch rendered and validated in CI |
-| `docs/figures/` + freshness gate | ✅ | `ui-test-orchestrator-flow` with `diagram-meta`; `make diagram` fails when the export is older than the sources it names |
+| `docs/figures/` + freshness gate | ✅ | `ui-test-orchestrator-flow` with `diagram-meta`; `make diagram` fails when the export is older than the sources it names; the .png export is checked against the .html it came from, and the checker lives in `scripts/`, so CI runs it too |
 | tests + coverage in CI | ✅ | unit tests need no browser, no network and no credentials; the browser and adb drivers are tested against a real browser and a fake adb respectively |
+| documented commands | ✅ | `make readme-check` resolves every command this file names and runs the offline ones; a `~/` path in a recipe is a failure, because a target that needs one machine is not a target |
 | README with what it demonstrates | ✅ | this file, with the numbers and the commands that produced them |
 
 ## Licence
