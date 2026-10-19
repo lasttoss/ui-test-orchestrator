@@ -71,6 +71,11 @@ flakes: ## A real flake: a timeout too short against a timeout long enough
 policy: ## Quarantine and release, in transitions you can reproduce
 	@./scripts/demo-policy.sh
 
+.PHONY: airtest
+airtest: build ## Read an Airtest log: make airtest LOG=path/to/log.txt
+	@test -n "$(LOG)" || { echo "usage: make airtest LOG=path/to/log.txt"; exit 1; }
+	./bin/orchestrator airtest --log "$(LOG)"
+
 .PHONY: capture
 capture: ## Capture a template: make capture URL=... SELECTOR=... OUT=file.png
 	@./bin/orchestrator capture --url "$(URL)" --selector "$(SELECTOR)" --out "$(OUT)"

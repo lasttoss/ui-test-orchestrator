@@ -60,6 +60,7 @@ Three things about that arrangement were learned by running it, and each was a f
 | **a schema that refuses to lie** | unknown keys and fields belonging to another action are errors, because the failure mode of an open schema is a scenario that passes while asserting nothing | `internal/scenario` |
 | **a flake policy with consequences** | retry, quarantine after two whole runs failing, release after three whole runs passing, all kept in a committed file; a quarantined failure does not fail the build but is still printed and still run | `internal/flake`, `state/quarantine.json` |
 | **a report you can send** | one HTML file with its screenshots inlined, plus a JSON summary a build system reads | `internal/report` |
+| **reading somebody else's log format** | a device-driven Airtest run leaves a log, and a log nobody reads is an attachment rather than a gate: the format is read back with Airtest's own rules, grouped into test cases, written as the same report, and returned as the same exit code | `internal/airtestlog` |
 | **measurements, not opinions** | what a visual assertion caught that text assertions did not, and how much of a "flake rate" was really a race | `scripts/measure-visual.sh`, `scripts/measure-flake.sh` |
 
 ## The measurements
@@ -121,6 +122,46 @@ run 4-6 against a healthy server   released after three passes in a row
 
 `state/quarantine.json` is committed, so which scenarios are trusted and why is a review comment rather
 than a memory.
+
+## A log somebody else wrote
+
+`make demo` drives a browser. A device-driven run — a real phone, the Airtest path this repository has an
+adb driver for — leaves a `log.txt` in a format of its own, and a run whose only output is an HTML file
+somebody attaches to a pipeline is not a gate. So the log is read back:
+
+```bash
+make build
+./bin/orchestrator airtest --log internal/airtestlog/testdata/airtest-log-fixed.txt --out report-airtest
+```
+
+```
+log internal/airtestlog/testdata/airtest-log-fixed.txt: failed · 2 cases (1 passed, 1 failed) · 8 entries
+  PASS test_healthcheck                   250 ms
+  FAIL test_purchase                     1.9 s   first failure: buy_pack — AssertionError: balance did not grow by 500
+```
+
+Exit code 1, because one case failed: the same red a browser run gives, without asking Airtest to write
+anything differently.
+
+**The format is one JSON object per line**, and the rules are Airtest's own, taken from its report
+(`airtest/report/report.py`) rather than invented here:
+
+| what the log says | what it means |
+|---|---|
+| `{"tag": "function", "depth": 1, "time": …, "data": {"name": "test_purchase", "start_time": …, "end_time": …}}` | a wrapped function: how a test case is written in Airtest. `start_time`/`end_time` are its duration |
+| `"data": {"traceback": …}` instead of `"ret"` | that function raised. This is where `airtest report` gets its red step, and it is the only failure signal a log carries |
+| `"depth": 2` | something that happened inside a row. Deeper lines come *before* the row they belong to, because `Logwrap` writes a function's own entry in a `finally` block |
+| the last row | `airtest report` decides the whole run on it, and on nothing else |
+
+That last row is worth a sentence: **this repository and Airtest can disagree**, and when they do the
+report says so instead of picking a winner. A run that failed and then logged a clean line is red here
+and green there, and a reader should see that rather than find out later.
+
+What the fixtures pin down, exactly, because a frozen clock makes it possible: a passing case at 250 ms, a
+nested call at 500 ms, the failing one at 750 ms, the case that contains it at 1900 ms, and a wall clock
+of 2800 ms. `internal/airtestlog/testdata/README.md` says how both logs were produced — by Airtest 1.4.3's
+own writer, not typed by hand, because a hand-written log only proves that a reader can read what its
+author already believed.
 
 ## How it works
 

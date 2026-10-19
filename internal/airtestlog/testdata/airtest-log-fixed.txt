@@ -1,0 +1,8 @@
+{"tag": "log", "depth": 1, "time": 1792380914.1, "data": {"msg": "server answers 200", "desc": "healthcheck"}}
+{"tag": "function", "depth": 1, "time": 1792380914.25, "data": {"name": "test_healthcheck", "call_args": {"kwargs": {}}, "start_time": 1792380914.0, "end_time": 1792380914.25, "ret": null}}
+{"tag": "log", "depth": 2, "time": 1792380915.1, "data": {"msg": "tap the shop icon", "desc": "open the shop"}}
+{"tag": "function", "depth": 2, "time": 1792380915.5, "data": {"name": "open_shop", "call_args": {"kwargs": {}}, "start_time": 1792380915.0, "end_time": 1792380915.5, "ret": null}}
+{"tag": "log", "depth": 2, "time": 1792380916.1, "data": {"msg": "tap the first pack", "desc": "select the 4.99 pack"}}
+{"tag": "function", "depth": 2, "time": 1792380916.75, "data": {"name": "buy_pack", "call_args": {"kwargs": {}}, "start_time": 1792380916.0, "end_time": 1792380916.75, "traceback": "Traceback (most recent call last):\n  File \"tc.air\", line 12, in buy_pack\nAssertionError: balance did not grow by 500\n"}}
+{"tag": "touch", "depth": 2, "time": 1792380916.8, "data": {"pos": [640, 1200], "desc": "tap the buy button"}}
+{"tag": "function", "depth": 1, "time": 1792380916.9, "data": {"name": "test_purchase", "call_args": {"kwargs": {}}, "start_time": 1792380915.0, "end_time": 1792380916.9, "traceback": "Traceback (most recent call last):\n  File \"tc.air\", line 30, in test_purchase\n  File \"tc.air\", line 12, in buy_pack\nAssertionError: balance did not grow by 500\n"}}

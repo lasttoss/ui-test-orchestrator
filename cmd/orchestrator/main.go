@@ -1,5 +1,6 @@
-// Command orchestrator runs a scenario suite against a URL, or serves the fixture application the demo
-// in the README uses, or captures a template for a visual assertion.
+// Command orchestrator runs a scenario suite against a URL, serves the fixture application the demo in
+// the README uses, captures a template for a visual assertion, or reads the log a device-driven Airtest
+// run left behind and turns it into the same report and the same exit code.
 package main
 
 import (
@@ -20,6 +21,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/lasttoss/ui-test-orchestrator/internal/airtestlog"
 	"github.com/lasttoss/ui-test-orchestrator/internal/app"
 	"github.com/lasttoss/ui-test-orchestrator/internal/driver"
 	"github.com/lasttoss/ui-test-orchestrator/internal/flake"
@@ -62,8 +64,10 @@ func run(args []string) error {
 		return captureTemplate(args)
 	case "policy":
 		return showPolicy(args)
+	case "airtest":
+		return readAirtestLog(args)
 	default:
-		return fmt.Errorf("unknown command %q: try run, serve, capture or policy", command)
+		return fmt.Errorf("unknown command %q: try run, serve, capture, policy or airtest", command)
 	}
 }
 
@@ -433,6 +437,60 @@ func showPolicy(args []string) error {
 	for id, entry := range s.Scenarios {
 		fmt.Printf("  %-34s %-12s runs=%d fails=%d flakes=%d streak(pass=%d fail=%d)\n",
 			id, entry.Status, entry.Runs, entry.Fails, entry.Flakes, entry.ConsecutivePasses, entry.ConsecutiveFailures)
+	}
+	return nil
+}
+
+// readAirtestLog reads the log a device-driven Airtest run wrote and does two things with it: writes the
+// report a person opens, and returns an error when anything in the log failed, which is what makes a
+// device run a gate instead of an attachment. The exit code is the suite's, exactly as `run` does.
+func readAirtestLog(args []string) error {
+	fs := flag.NewFlagSet("airtest", flag.ExitOnError)
+	logPath := fs.String("log", "", "path to the log.txt an airtest run wrote (required)")
+	out := fs.String("out", "report-airtest", "directory for index.html and summary.json")
+	quiet := fs.Bool("quiet", false, "print the verdict and nothing else")
+	if err := fs.Parse(args); err != nil {
+		return err
+	}
+	if *logPath == "" {
+		return errors.New("airtest: --log is required, pointed at the log.txt an airtest run wrote")
+	}
+	run, err := airtestlog.ReadFile(*logPath)
+	if err != nil {
+		return err
+	}
+	if err := airtestlog.WriteReport(*out, run); err != nil {
+		return err
+	}
+	if !*quiet {
+		fmt.Printf("log %s: %s · %d cases (%d passed, %d failed) · %d entries · %s\n",
+			run.Path, run.Verdict(), len(run.Cases), run.CasesPassed, run.CasesFailed, run.Entries,
+			filepath.Join(*out, "index.html"))
+		for _, c := range run.Cases {
+			verdict := "PASS"
+			if c.Failed {
+				verdict = "FAIL"
+			}
+			fmt.Printf("  %-4s %-32s %8s", verdict, c.Name, airtestlog.FormatDurationMS(c.DurationMS))
+			if c.Failed {
+				if c.FailedStep != "" {
+					fmt.Printf("   first failure: %s", c.FailedStep)
+				}
+				if c.Error != "" {
+					fmt.Printf(" — %s", c.Error)
+				}
+			}
+			fmt.Println()
+		}
+		if len(run.Loose) > 0 {
+			fmt.Printf("  %d rows belong to no case (a script that never entered a wrapped function)\n", len(run.Loose))
+		}
+		if note := run.Disagreement(); note != "" {
+			fmt.Printf("note: %s\n", note)
+		}
+	}
+	if run.Failed {
+		return fmt.Errorf("%d of %d cases failed, the report is in %s", run.CasesFailed, len(run.Cases), *out)
 	}
 	return nil
 }

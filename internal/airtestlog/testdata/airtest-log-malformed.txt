@@ -1,0 +1,3 @@
+{"tag": "log", "depth": 1, "time": 1792380914.0, "data": {"msg": "fine"}}
+this is not json
+{"tag": "function", "depth": 1, "time": 1792380914.0, "data": {"name": "after_the_bad_line"}}
