@@ -205,7 +205,7 @@ svg.append(arrow(x2 + col2, driver_y + 34, x3, flake_y + 34, "outcomes"))
 svg.append(arrow(x1 + col1, runner_y + 34, x2, vision_y + 24, "attempts"))
 svg.append(arrow(x2 + col2, vision_y + 24, x3, report_y + 24, "numbers"))
 svg.append(elbow(x2 + col2, driver_y + 90, x3, log_y + 40, "a device run", dashed=True))
-svg.append(text(MARGIN, H - 16, "make demo  ·  make compose-suite  ·  scripts/measure-visual.sh  ·  scripts/measure-flake.sh",
+svg.append(text(MARGIN, H - 16, "make demo  ·  make compose-suite  ·  make readme-check  ·  scripts/measure-visual.sh  ·  scripts/measure-flake.sh",
                 size=11, fill=MUTED, family="mono"))
 svg.append(rect(MARGIN, strip_y, total_w - MARGIN * 2, strip_h))
 svg.append(text(MARGIN + PAD, strip_y + 26, "three rules this repository keeps, each one because breaking it produced a wrong number",
